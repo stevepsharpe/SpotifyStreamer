@@ -3,4 +3,10 @@
 
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
+
+    <string name="title_activity_main">MainActivity</string>
+
+    <string name="hint_search">Search for an artist</string>
+
+    <string name="error_blank_search">Please provide a search term</string>
 </resources>

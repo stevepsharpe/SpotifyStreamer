@@ -1,9 +1,11 @@
-package com.stevepsharpe.spotifystreamer;
+package com.stevepsharpe.spotifystreamer.ui;
 
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+
+import com.stevepsharpe.spotifystreamer.R;
 
 
 public class MainActivity extends ActionBarActivity {
@@ -13,6 +15,7 @@ public class MainActivity extends ActionBarActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
     }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
