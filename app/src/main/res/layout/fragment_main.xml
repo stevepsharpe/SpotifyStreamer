@@ -9,13 +9,18 @@
                 tools:context="com.stevepsharpe.spotifystreamer.ui.MainActivityFragment"
               android:orientation="vertical">
 
-
     <EditText
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/search_edittext"
+        android:id="@+id/searchEditText"
         android:hint="@string/hint_search"
         android:singleLine="true"
         android:imeOptions="actionSearch" />
+
+    <ListView
+        android:id="@+id/artistsListView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
 
 </LinearLayout>
