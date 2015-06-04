@@ -4,13 +4,15 @@
               android:orientation="horizontal"
               android:layout_width="match_parent"
               android:layout_height="match_parent"
+              android:paddingTop="@dimen/list_item_vertical_margin"
+              android:paddingBottom="@dimen/list_item_vertical_margin"
               tools:context=".ui.MainActivity">
 
     <ImageView
         android:id="@+id/artistThumb"
         android:layout_width="@dimen/thumb_size"
         android:layout_height="@dimen/thumb_size"
-        android:background="#ffffffff"
+        android:background="@android:color/transparent"
         android:layout_gravity="center_vertical"/>
 
     <TextView
