@@ -12,40 +12,39 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.ArrayAdapter;
+import android.widget.AdapterView;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
-import com.squareup.picasso.Picasso;
 import com.stevepsharpe.spotifystreamer.R;
+import com.stevepsharpe.spotifystreamer.ui.adapters.ArtistsArrayAdapter;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import kaaes.spotify.webapi.android.SpotifyApi;
-import kaaes.spotify.webapi.android.SpotifyCallback;
 import kaaes.spotify.webapi.android.SpotifyError;
 import kaaes.spotify.webapi.android.SpotifyService;
 import kaaes.spotify.webapi.android.models.Artist;
-import kaaes.spotify.webapi.android.models.ArtistsPager;
 import retrofit.RetrofitError;
-import retrofit.client.Response;
 
 
 /**
  * A placeholder fragment containing a simple view.
  */
-public class MainActivityFragment extends Fragment {
+public class SearchActivityFragment extends Fragment {
 
-    private static final String LOG_TAG = MainActivityFragment.class.getSimpleName();
+    private static final String LOG_TAG = SearchActivityFragment.class.getSimpleName();
+
     private EditText mSearchField;
     private ListView mListView;
-    private SearchArtistsTask mSearchArtistsTask;
-    private ArtistArrayAdapter mArtistArrayAdapter;
 
-    public MainActivityFragment() {
+    private SearchArtistsTask mSearchArtistsTask;
+    private ArtistsArrayAdapter mArtistArrayAdapter;
+
+    public SearchActivityFragment() {
     }
 
     @Override
@@ -54,9 +53,21 @@ public class MainActivityFragment extends Fragment {
 
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
+        mArtistArrayAdapter = new ArtistsArrayAdapter(getActivity());
+
         mListView = (ListView) rootView.findViewById(R.id.artistsListView);
-        mArtistArrayAdapter = new ArtistArrayAdapter(getActivity());
         mListView.setAdapter(mArtistArrayAdapter);
+        mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                // not sure if I should have used mArtistArrayAdapter like so...
+                // Artist artist = mArtistArrayAdapter.getItem(i);
+                // or like I ended up doing getting the adapter from the adapterView?
+                Artist artist = (Artist) adapterView.getAdapter().getItem(i);
+
+                Toast.makeText(getActivity(), "Artist: " + artist.name, Toast.LENGTH_LONG).show();
+            }
+        });
 
         mSearchField = (EditText) rootView.findViewById(R.id.searchEditText);
         mSearchField.setOnEditorActionListener(new TextView.OnEditorActionListener() {
@@ -113,25 +124,6 @@ public class MainActivityFragment extends Fragment {
                 Log.e(LOG_TAG, "SpotifyError: " + spotifyError);
             }
 
-//            spotifyService.searchArtists(strings[0], new SpotifyCallback<ArtistsPager>() {
-//
-//                @Override
-//                public void failure(SpotifyError spotifyError) {
-//                    Log.e(LOG_TAG, "SpotifyError: " + spotifyError);
-//                }
-//
-//                @Override
-//                public void success(ArtistsPager artistsPager, Response response) {
-//
-//                    // TODO - Remove logs and change return type of AsyncTask
-//                    for (Artist artist : artistsPager.artists.items) {
-//                        Log.v(LOG_TAG, "Artist: " + artist.name + " - ID: " + artist.id);
-//                    }
-//
-//                    artists = artistsPager.artists.items;
-//                }
-//            });
-
             return artists;
         }
 
@@ -140,52 +132,6 @@ public class MainActivityFragment extends Fragment {
             // TODO - update the list view
             mArtistArrayAdapter.clear();
             mArtistArrayAdapter.addAll(artists);
-        }
-    }
-
-    private class ArtistArrayAdapter extends ArrayAdapter<Artist> {
-
-        Context context;
-
-        public ArtistArrayAdapter(Context context) {
-            super(context, R.layout.list_item_artist, new ArrayList<Artist>());
-            this.context = context;
-        }
-
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-
-            ArtistViewHolder holder =  null;
-            Artist artist = this.getItem(position);
-
-            if (convertView == null) {
-                LayoutInflater inflater = LayoutInflater.from(context);
-                convertView = inflater.inflate(R.layout.list_item_artist, parent, false);
-                holder = new ArtistViewHolder(convertView);
-                convertView.setTag(holder);
-            } else {
-                holder = (ArtistViewHolder) convertView.getTag();
-            }
-
-            holder.artistName.setText(artist.name);
-
-            if (artist.images.size() > 0) {
-                Picasso.with(this.getContext()).load(artist.images.get(0).url).into(holder.artistThumb);
-            } else {
-                holder.artistThumb.setImageResource(R.drawable.placeholder);
-            }
-
-            return convertView;
-        }
-    }
-
-    private static class ArtistViewHolder {
-        ImageView artistThumb;
-        TextView artistName;
-
-        public ArtistViewHolder(View view) {
-            artistThumb = (ImageView) view.findViewById(R.id.artistThumb);
-            artistName = (TextView) view.findViewById(R.id.artistName);
         }
     }
 }

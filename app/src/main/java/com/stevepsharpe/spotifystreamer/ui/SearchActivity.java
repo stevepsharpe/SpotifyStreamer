@@ -8,7 +8,7 @@ import android.view.MenuItem;
 import com.stevepsharpe.spotifystreamer.R;
 
 
-public class MainActivity extends ActionBarActivity {
+public class SearchActivity extends ActionBarActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

@@ -9,4 +9,5 @@
     <string name="hint_search">Search for an artist</string>
 
     <string name="error_blank_search">Please provide a search term</string>
+    <string name="error_spotify">There was an error connecting to Spotify</string>
 </resources>
