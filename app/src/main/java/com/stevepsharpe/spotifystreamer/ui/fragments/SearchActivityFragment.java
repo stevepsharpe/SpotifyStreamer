@@ -6,6 +6,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
+import android.support.v7.widget.SearchView;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -47,6 +48,7 @@ public class SearchActivityFragment extends Fragment {
     private static final int TRIGGER_SEARCH = 100;
     private static final int SEARCH_TRIGGER_DELAY_IN_MS = 500;
 
+    private SearchView mSearchView;
     private EditText mSearchField;
     private ListView mListView;
     private Toast mToast;
@@ -81,42 +83,27 @@ public class SearchActivityFragment extends Fragment {
             }
 
             @Override
-            public void onScroll(AbsListView absListView, int i, int i1, int i2) {}
+            public void onScroll(AbsListView absListView, int i, int i1, int i2) {
+            }
         });
 
-        mSearchField = (EditText) rootView.findViewById(R.id.searchEditText);
-
-        // http://developer.android.com/reference/android/widget/TextView.html#addTextChangedListener(android.text.TextWatcher)
-        mSearchField.addTextChangedListener(new TextWatcher() {
+        mSearchView = (SearchView) rootView.findViewById(R.id.searchArtist);
+        mSearchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                handler.removeMessages(TRIGGER_SEARCH);
+                handler.sendEmptyMessage(TRIGGER_SEARCH);
+                return true;
+            }
 
             @Override
-            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
-
-            @Override
-            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
-
-            @Override
-            public void afterTextChanged(final Editable editable) {
+            public boolean onQueryTextChange(String newText) {
                 handler.removeMessages(TRIGGER_SEARCH);
                 handler.sendEmptyMessageDelayed(TRIGGER_SEARCH, SEARCH_TRIGGER_DELAY_IN_MS);
+                return false;
             }
         });
-
-        // http://developer.android.com/reference/android/widget/TextView.html#setOnEditorActionListener(android.widget.TextView.OnEditorActionListener)
-        mSearchField.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-            @Override
-            public boolean onEditorAction(TextView textView, int actionId, KeyEvent keyEvent) {
-                boolean handled = false;
-                if (actionId == EditorInfo.IME_ACTION_SEARCH) {
-
-                    searchArtists();
-                    hideKeyboard();
-                    handled = true;
-                }
-                return handled;
-            }
-        });
-
+        
         return rootView;
     }
 
@@ -132,7 +119,7 @@ public class SearchActivityFragment extends Fragment {
 
     private void searchArtists() {
 
-        if (mSearchField.getText().toString().length() > 0) {
+        if (mSearchView.getQuery().toString().length() > 0) {
 
             // do we have a task already?
             // this raises a java.io.InterruptedIOException from Retrofit
@@ -142,7 +129,7 @@ public class SearchActivityFragment extends Fragment {
                 mSearchArtistsTask.cancel(true);
             }
 
-            String query = mSearchField.getText().toString();
+            String query = mSearchView.getQuery().toString();
 
             mSearchArtistsTask = new SearchArtistsTask();
             mSearchArtistsTask.execute(query);
