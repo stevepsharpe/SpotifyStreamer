@@ -1,4 +1,4 @@
-package com.stevepsharpe.spotifystreamer.ui;
+package com.stevepsharpe.spotifystreamer.ui.viewholders;
 
 import android.view.View;
 import android.widget.ImageView;
