@@ -12,4 +12,5 @@
     <string name="error_spotify">There was an error connecting to Spotify</string>
     <string name="title_activity_tracks">Top 10 Tracks</string>
     <string name="no_search_results">No results found - Please refine your search</string>
+    <string name="no_top_tracks">No top tracks found</string>
 </resources>

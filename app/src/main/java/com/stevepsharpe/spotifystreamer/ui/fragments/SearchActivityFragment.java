@@ -18,6 +18,7 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.AbsListView;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -68,11 +69,8 @@ public class SearchActivityFragment extends Fragment {
         SpotifyApi api = new SpotifyApi();
         mSpotifyService = api.getService();
 
-//        TextView emptyText = (TextView) rootView.findViewById(android.R.id.empty);
-
         mListView = (ListView) rootView.findViewById(R.id.artistsListView);
         mListView.setAdapter(mArtistArrayAdapter);
-//        mListView.setEmptyView(emptyText);
         mListView.setOnItemClickListener(mArtistArrayAdapter);
 
         // http://stackoverflow.com/questions/10317716/android-remove-soft-keyboard-when-touching-the-listview
@@ -86,13 +84,8 @@ public class SearchActivityFragment extends Fragment {
             public void onScroll(AbsListView absListView, int i, int i1, int i2) {}
         });
 
-        // hide the emptyView by default until a search is performed
-//        emptyText.setVisibility(View.INVISIBLE);
-
         mSearchField = (EditText) rootView.findViewById(R.id.searchEditText);
 
-        // I've added this to do a live search - however this generates a lot of network requests
-        // maybe I just need to use setOnEditorActionListener?
         // http://developer.android.com/reference/android/widget/TextView.html#addTextChangedListener(android.text.TextWatcher)
         mSearchField.addTextChangedListener(new TextWatcher() {
 
@@ -139,15 +132,15 @@ public class SearchActivityFragment extends Fragment {
 
     private void searchArtists() {
 
-        if (mSearchField.length() > 0) {
+        if (mSearchField.getText().toString().length() > 0) {
 
             // do we have a task already?
             // this raises a java.io.InterruptedIOException from Retrofit
             // when cancelling the task
             // leaving in for reference
-//            if (mSearchArtistsTask != null) {
-//                mSearchArtistsTask.cancel(true);
-//            }
+            if (mSearchArtistsTask != null) {
+                mSearchArtistsTask.cancel(true);
+            }
 
             String query = mSearchField.getText().toString();
 
@@ -155,12 +148,6 @@ public class SearchActivityFragment extends Fragment {
             mSearchArtistsTask.execute(query);
 
         } else {
-            if (mToast != null) {
-                // Close the toast if it's showing
-                mToast.cancel();
-            }
-            mToast = Toast.makeText(getActivity(), R.string.no_search_results, Toast.LENGTH_SHORT);
-            mToast.show();
             mArtistArrayAdapter.clear();
         }
 

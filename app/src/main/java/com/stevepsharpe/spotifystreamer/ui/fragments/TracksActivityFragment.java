@@ -34,11 +34,14 @@ import retrofit.RetrofitError;
 public class TracksActivityFragment extends Fragment {
 
     private static final String LOG_TAG = TracksActivityFragment.class.getSimpleName();
+    private static final String COUNTRY_CODE = "GB";
 
     private ListView mListView;
+    private Toast mToast;
 
     private GetTracksTask mGetTracksTask;
     private TracksArrayAdapter mTracksArrayAdapter;
+    private SpotifyService mSpotifyService;
 
     public TracksActivityFragment() {
     }
@@ -51,15 +54,12 @@ public class TracksActivityFragment extends Fragment {
 
         mTracksArrayAdapter = new TracksArrayAdapter(getActivity());
 
+        SpotifyApi api = new SpotifyApi();
+        mSpotifyService = api.getService();
+
         mListView = (ListView) rootView.findViewById(R.id.tracksListView);
         mListView.setAdapter(mTracksArrayAdapter);
-        mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                Track track = (Track) adapterView.getAdapter().getItem(i);
-                Toast.makeText(getActivity(), "Track: " + track.name, Toast.LENGTH_LONG);
-            }
-        });
+        mListView.setOnItemClickListener(mTracksArrayAdapter);
 
         Intent intent = getActivity().getIntent();
         String artistID = intent.getStringExtra("artistID");
@@ -81,8 +81,8 @@ public class TracksActivityFragment extends Fragment {
 
     private void getTopTracks(String artistID) {
         if (artistID != null) {
-            GetTracksTask getTracksTask = new GetTracksTask();
-            getTracksTask.execute(artistID);
+            mGetTracksTask = new GetTracksTask();
+            mGetTracksTask.execute(artistID);
         }
     }
 
@@ -91,27 +91,34 @@ public class TracksActivityFragment extends Fragment {
         @Override
         protected List doInBackground(String... strings) {
 
-            SpotifyApi api = new SpotifyApi();
-            SpotifyService spotifyService = api.getService();
-            List<Track> tracks = new ArrayList<Track>();
-
             // build the params
-            Map<String, Object> params = new HashMap<>();
-            params.put("country", "GB");
+            Map<String, Object> options = new HashMap<>();
+            options.put("country", COUNTRY_CODE);
 
             try {
-                tracks = spotifyService.getArtistTopTrack(strings[0], params).tracks;
+                return mSpotifyService.getArtistTopTrack(strings[0], options).tracks;
             } catch (RetrofitError error) {
-                SpotifyError spotifyError = SpotifyError.fromRetrofitError(error);
-                // handle error
-                Log.e(LOG_TAG, "SpotifyError: " + spotifyError);
+                Log.e(LOG_TAG, "SpotifyError: " + SpotifyError.fromRetrofitError(error));
+                return null;
             }
-
-            return tracks;
         }
 
         @Override
         protected void onPostExecute(List tracks) {
+
+            if (mToast != null) {
+                // Close the toast if it's showing
+                mToast.cancel();
+            }
+
+            if (tracks == null) {
+                mToast = Toast.makeText(getActivity(), R.string.error_spotify, Toast.LENGTH_SHORT);
+                mToast.show();
+            } else if (tracks.isEmpty()) {
+                mToast = Toast.makeText(getActivity(), R.string.no_top_tracks, Toast.LENGTH_SHORT);
+                mToast.show();
+            }
+
             mTracksArrayAdapter.clear();
             mTracksArrayAdapter.addAll(tracks);
         }
