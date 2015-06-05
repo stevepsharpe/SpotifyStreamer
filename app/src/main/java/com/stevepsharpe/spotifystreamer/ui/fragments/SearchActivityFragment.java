@@ -32,10 +32,13 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import kaaes.spotify.webapi.android.SpotifyApi;
+import kaaes.spotify.webapi.android.SpotifyCallback;
 import kaaes.spotify.webapi.android.SpotifyError;
 import kaaes.spotify.webapi.android.SpotifyService;
 import kaaes.spotify.webapi.android.models.Artist;
+import kaaes.spotify.webapi.android.models.ArtistsPager;
 import retrofit.RetrofitError;
+import retrofit.client.Response;
 
 
 /**
@@ -49,11 +52,9 @@ public class SearchActivityFragment extends Fragment {
     private static final int SEARCH_TRIGGER_DELAY_IN_MS = 500;
 
     private SearchView mSearchView;
-    private EditText mSearchField;
     private ListView mListView;
     private Toast mToast;
 
-    private SearchArtistsTask mSearchArtistsTask;
     private ArtistsArrayAdapter mArtistArrayAdapter;
     private SpotifyService mSpotifyService;
 
@@ -103,7 +104,7 @@ public class SearchActivityFragment extends Fragment {
                 return false;
             }
         });
-        
+
         return rootView;
     }
 
@@ -121,18 +122,45 @@ public class SearchActivityFragment extends Fragment {
 
         if (mSearchView.getQuery().toString().length() > 0) {
 
-            // do we have a task already?
-            // this raises a java.io.InterruptedIOException from Retrofit
-            // when cancelling the task
-            // leaving in for reference
-            if (mSearchArtistsTask != null) {
-                mSearchArtistsTask.cancel(true);
-            }
-
             String query = mSearchView.getQuery().toString();
+            mSpotifyService.searchArtists(query, new SpotifyCallback<ArtistsPager>() {
+                @Override
+                public void failure(SpotifyError spotifyError) {
 
-            mSearchArtistsTask = new SearchArtistsTask();
-            mSearchArtistsTask.execute(query);
+                    getActivity().runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+
+                            mToast = Toast.makeText(getActivity(), R.string.error_spotify, Toast.LENGTH_SHORT);
+                            mToast.show();
+
+                        }
+                    });
+
+                }
+
+                @Override
+                public void success(ArtistsPager artistsPager, Response response) {
+                    final List<Artist> artists = artistsPager.artists.items;
+
+                    getActivity().runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+
+                            mArtistArrayAdapter.clear();
+
+                            if (artists.isEmpty()) {
+                                mToast = Toast.makeText(getActivity(), R.string.no_search_results, Toast.LENGTH_SHORT);
+                                mToast.show();
+                            } else {
+                                mArtistArrayAdapter.addAll(artists);
+                            }
+
+                        }
+                    });
+
+                }
+            });
 
         } else {
             mArtistArrayAdapter.clear();
@@ -148,38 +176,4 @@ public class SearchActivityFragment extends Fragment {
         }
     }
 
-    private class SearchArtistsTask extends AsyncTask<String, Void, List<Artist>> {
-
-        @Override
-        protected List doInBackground(String... strings) {
-
-            try {
-                // search with wildcard to match how Spotify works with partial match
-                return mSpotifyService.searchArtists(strings[0] + "*").artists.items;
-            } catch (RetrofitError error) {
-                Log.e(LOG_TAG, "SpotifyError: " + SpotifyError.fromRetrofitError(error));
-                return null;
-            }
-        }
-
-        @Override
-        protected void onPostExecute(List<Artist> artists) {
-
-            if (mToast != null) {
-                // Close the toast if it's showing
-                mToast.cancel();
-            }
-
-            if (artists == null) {
-                mToast = Toast.makeText(getActivity(), R.string.error_spotify, Toast.LENGTH_SHORT);
-                mToast.show();
-            } else if (artists.isEmpty()) {
-                mToast = Toast.makeText(getActivity(), R.string.no_search_results, Toast.LENGTH_SHORT);
-                mToast.show();
-            }
-
-            mArtistArrayAdapter.clear();
-            mArtistArrayAdapter.addAll(artists);
-        }
-    }
 }
