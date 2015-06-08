@@ -4,6 +4,7 @@ import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.Message;
+import android.os.Parcelable;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
 import android.support.v7.widget.SearchView;
@@ -25,8 +26,10 @@ import android.widget.Toast;
 
 import com.stevepsharpe.spotifystreamer.R;
 import com.stevepsharpe.spotifystreamer.adapters.ArtistsArrayAdapter;
+import com.stevepsharpe.spotifystreamer.model.SpotifyArtist;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -47,12 +50,16 @@ import retrofit.client.Response;
 public class SearchActivityFragment extends Fragment {
 
     private static final String LOG_TAG = SearchActivityFragment.class.getSimpleName();
+    private static final String STATE_QUERY = "state_query";
+    private static final String STATE_ARTISTS = "state_artists";
 
     private static final int TRIGGER_SEARCH = 100;
     private static final int SEARCH_TRIGGER_DELAY_IN_MS = 500;
 
+
     private SearchView mSearchView;
     private ListView mListView;
+    private ArrayList<SpotifyArtist> mSpotifyArtists;
     private Toast mToast;
 
     private ArtistsArrayAdapter mArtistArrayAdapter;
@@ -67,7 +74,7 @@ public class SearchActivityFragment extends Fragment {
 
         View rootView = inflater.inflate(R.layout.fragment_search, container, false);
 
-        mArtistArrayAdapter = new ArtistsArrayAdapter(getActivity());
+        mArtistArrayAdapter = new ArtistsArrayAdapter(getActivity(), new ArrayList<SpotifyArtist>());
 
         SpotifyApi api = new SpotifyApi();
         mSpotifyService = api.getService();
@@ -105,7 +112,23 @@ public class SearchActivityFragment extends Fragment {
             }
         });
 
+        if (savedInstanceState != null) {
+            mSpotifyArtists = savedInstanceState.getParcelableArrayList(STATE_ARTISTS);
+            mArtistArrayAdapter.clear();
+            mArtistArrayAdapter.addAll(mSpotifyArtists);
+        }
+
         return rootView;
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+
+        String query = mSearchView.getQuery().toString();
+        outState.putString(STATE_QUERY, query);
+        outState.putParcelableArrayList(STATE_ARTISTS, mSpotifyArtists);
+
+        super.onSaveInstanceState(outState);
     }
 
     // http://stackoverflow.com/questions/10217051/how-to-avoid-multiple-triggers-on-edittext-while-user-is-typing
@@ -130,10 +153,8 @@ public class SearchActivityFragment extends Fragment {
                     getActivity().runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-
                             mToast = Toast.makeText(getActivity(), R.string.error_spotify, Toast.LENGTH_SHORT);
                             mToast.show();
-
                         }
                     });
 
@@ -141,7 +162,8 @@ public class SearchActivityFragment extends Fragment {
 
                 @Override
                 public void success(ArtistsPager artistsPager, Response response) {
-                    final List<Artist> artists = artistsPager.artists.items;
+
+                    mSpotifyArtists = (ArrayList<SpotifyArtist>) SpotifyArtist.spotifyArtistsArrayList(artistsPager.artists.items);
 
                     getActivity().runOnUiThread(new Runnable() {
                         @Override
@@ -149,11 +171,11 @@ public class SearchActivityFragment extends Fragment {
 
                             mArtistArrayAdapter.clear();
 
-                            if (artists.isEmpty()) {
+                            if (mSpotifyArtists.isEmpty()) {
                                 mToast = Toast.makeText(getActivity(), R.string.no_search_results, Toast.LENGTH_SHORT);
                                 mToast.show();
                             } else {
-                                mArtistArrayAdapter.addAll(artists);
+                                mArtistArrayAdapter.addAll(mSpotifyArtists);
                             }
 
                         }

@@ -1,32 +1,34 @@
 package com.stevepsharpe.spotifystreamer.ui.fragments;
 
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.Toast;
 
 import com.stevepsharpe.spotifystreamer.R;
 import com.stevepsharpe.spotifystreamer.adapters.TracksArrayAdapter;
+import com.stevepsharpe.spotifystreamer.model.SpotifyArtist;
+import com.stevepsharpe.spotifystreamer.model.SpotifyTrack;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
+
 import java.util.Map;
 
 import kaaes.spotify.webapi.android.SpotifyApi;
+import kaaes.spotify.webapi.android.SpotifyCallback;
 import kaaes.spotify.webapi.android.SpotifyError;
 import kaaes.spotify.webapi.android.SpotifyService;
-import kaaes.spotify.webapi.android.models.Track;
-import retrofit.RetrofitError;
+
+
+import kaaes.spotify.webapi.android.models.Tracks;
+import retrofit.client.Response;
 
 /**
  * A placeholder fragment containing a simple view.
@@ -34,12 +36,16 @@ import retrofit.RetrofitError;
 public class TracksActivityFragment extends Fragment {
 
     private static final String LOG_TAG = TracksActivityFragment.class.getSimpleName();
+    public static final String SPOTIFY_ARTIST = "spotify_artist";
+    public static final String SPOTIFY_TRACKS = "spotify_tracks";
+
     private static final String COUNTRY_CODE = "GB";
 
     private ListView mListView;
     private Toast mToast;
+    private SpotifyArtist mArtist;
+    private ArrayList<SpotifyTrack> mSpotifyTracks;
 
-    private GetTracksTask mGetTracksTask;
     private TracksArrayAdapter mTracksArrayAdapter;
     private SpotifyService mSpotifyService;
 
@@ -61,14 +67,28 @@ public class TracksActivityFragment extends Fragment {
         mListView.setAdapter(mTracksArrayAdapter);
         mListView.setOnItemClickListener(mTracksArrayAdapter);
 
-        Intent intent = getActivity().getIntent();
-        String artistID = intent.getStringExtra("artistID");
-        String artistName = intent.getStringExtra("artistName");
+        if (savedInstanceState != null) {
+            mArtist = savedInstanceState.getParcelable(SPOTIFY_ARTIST);
+            mSpotifyTracks = savedInstanceState.getParcelableArrayList(SPOTIFY_TRACKS);
 
-        setSubTitle(artistName);
-        getTopTracks(artistID);
+            mTracksArrayAdapter.clear();
+            mTracksArrayAdapter.addAll(mSpotifyTracks);
+        } else {
+            Intent intent = getActivity().getIntent();
+            mArtist = intent.getParcelableExtra(SPOTIFY_ARTIST);
+            getTopTracks();
+        }
+
+        setSubTitle(mArtist.getName());
 
         return rootView;
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        outState.putParcelable(SPOTIFY_ARTIST, mArtist);
+        outState.putParcelableArrayList(SPOTIFY_TRACKS, mSpotifyTracks);
+        super.onSaveInstanceState(outState);
     }
 
     private void setSubTitle(String artistName) {
@@ -79,48 +99,49 @@ public class TracksActivityFragment extends Fragment {
         }
     }
 
-    private void getTopTracks(String artistID) {
-        if (artistID != null) {
-            mGetTracksTask = new GetTracksTask();
-            mGetTracksTask.execute(artistID);
-        }
-    }
-
-    private class GetTracksTask extends AsyncTask<String, Void, List> {
-
-        @Override
-        protected List doInBackground(String... strings) {
+    private void getTopTracks() {
+        if (mArtist != null) {
 
             // build the params
             Map<String, Object> options = new HashMap<>();
             options.put("country", COUNTRY_CODE);
 
-            try {
-                return mSpotifyService.getArtistTopTrack(strings[0], options).tracks;
-            } catch (RetrofitError error) {
-                Log.e(LOG_TAG, "SpotifyError: " + SpotifyError.fromRetrofitError(error));
-                return null;
-            }
-        }
+            mSpotifyService.getArtistTopTrack(mArtist.getId(), options, new SpotifyCallback<Tracks>() {
+                @Override
+                public void failure(SpotifyError spotifyError) {
 
-        @Override
-        protected void onPostExecute(List tracks) {
+                    getActivity().runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            mToast = Toast.makeText(getActivity(), R.string.error_spotify, Toast.LENGTH_SHORT);
+                            mToast.show();
+                        }
+                    });
+                }
 
-            if (mToast != null) {
-                // Close the toast if it's showing
-                mToast.cancel();
-            }
+                @Override
+                public void success(Tracks tracks, Response response) {
+                    mSpotifyTracks = (ArrayList<SpotifyTrack>) SpotifyTrack.spotifyTracksArrayList(tracks.tracks);
 
-            if (tracks == null) {
-                mToast = Toast.makeText(getActivity(), R.string.error_spotify, Toast.LENGTH_SHORT);
-                mToast.show();
-            } else if (tracks.isEmpty()) {
-                mToast = Toast.makeText(getActivity(), R.string.no_top_tracks, Toast.LENGTH_SHORT);
-                mToast.show();
-            }
+                    getActivity().runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
 
-            mTracksArrayAdapter.clear();
-            mTracksArrayAdapter.addAll(tracks);
+                            mTracksArrayAdapter.clear();
+
+                            if (mSpotifyTracks.isEmpty()) {
+                                mToast = Toast.makeText(getActivity(), R.string.no_top_tracks, Toast.LENGTH_SHORT);
+                                mToast.show();
+                            } else {
+                                mTracksArrayAdapter.addAll(mSpotifyTracks);
+                            }
+
+                        }
+                    });
+
+                }
+            });
+
         }
     }
 }
