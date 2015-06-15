@@ -21,6 +21,8 @@ import java.util.HashMap;
 
 import java.util.Map;
 
+import butterknife.ButterKnife;
+import butterknife.InjectView;
 import kaaes.spotify.webapi.android.SpotifyApi;
 import kaaes.spotify.webapi.android.SpotifyCallback;
 import kaaes.spotify.webapi.android.SpotifyError;
@@ -41,13 +43,14 @@ public class TracksActivityFragment extends Fragment {
 
     private static final String COUNTRY_CODE = "GB";
 
-    private ListView mListView;
     private Toast mToast;
     private SpotifyArtist mArtist;
     private ArrayList<SpotifyTrack> mSpotifyTracks;
 
     private TracksArrayAdapter mTracksArrayAdapter;
     private SpotifyService mSpotifyService;
+
+    @InjectView(R.id.tracksListView) ListView mListView;
 
     public TracksActivityFragment() {
     }
@@ -57,13 +60,13 @@ public class TracksActivityFragment extends Fragment {
                              Bundle savedInstanceState) {
 
         View rootView = inflater.inflate(R.layout.fragment_tracks, container, false);
+        ButterKnife.inject(this, rootView);
 
         mTracksArrayAdapter = new TracksArrayAdapter(getActivity());
 
         SpotifyApi api = new SpotifyApi();
         mSpotifyService = api.getService();
 
-        mListView = (ListView) rootView.findViewById(R.id.tracksListView);
         mListView.setAdapter(mTracksArrayAdapter);
         mListView.setOnItemClickListener(mTracksArrayAdapter);
 

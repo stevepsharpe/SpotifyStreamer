@@ -1,27 +1,17 @@
 package com.stevepsharpe.spotifystreamer.ui.fragments;
 
 import android.content.Context;
-import android.os.AsyncTask;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.os.Parcelable;
 import android.support.v4.app.Fragment;
-import android.os.Bundle;
 import android.support.v7.widget.SearchView;
-import android.text.Editable;
-import android.text.TextWatcher;
-import android.util.Log;
-import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AbsListView;
-import android.widget.EditText;
 import android.widget.ListView;
-import android.widget.ProgressBar;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.stevepsharpe.spotifystreamer.R;
@@ -29,18 +19,14 @@ import com.stevepsharpe.spotifystreamer.adapters.ArtistsArrayAdapter;
 import com.stevepsharpe.spotifystreamer.model.SpotifyArtist;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 
+import butterknife.ButterKnife;
+import butterknife.InjectView;
 import kaaes.spotify.webapi.android.SpotifyApi;
 import kaaes.spotify.webapi.android.SpotifyCallback;
 import kaaes.spotify.webapi.android.SpotifyError;
 import kaaes.spotify.webapi.android.SpotifyService;
-import kaaes.spotify.webapi.android.models.Artist;
 import kaaes.spotify.webapi.android.models.ArtistsPager;
-import retrofit.RetrofitError;
 import retrofit.client.Response;
 
 
@@ -56,14 +42,14 @@ public class SearchActivityFragment extends Fragment {
     private static final int TRIGGER_SEARCH = 100;
     private static final int SEARCH_TRIGGER_DELAY_IN_MS = 500;
 
-
-    private SearchView mSearchView;
-    private ListView mListView;
     private ArrayList<SpotifyArtist> mSpotifyArtists;
     private Toast mToast;
 
     private ArtistsArrayAdapter mArtistArrayAdapter;
     private SpotifyService mSpotifyService;
+
+    @InjectView(R.id.artistsListView) ListView mListView;
+    @InjectView(R.id.searchArtist) SearchView mSearchView;
 
     public SearchActivityFragment() {
     }
@@ -73,13 +59,13 @@ public class SearchActivityFragment extends Fragment {
                              Bundle savedInstanceState) {
 
         View rootView = inflater.inflate(R.layout.fragment_search, container, false);
+        ButterKnife.inject(this, rootView);
 
         mArtistArrayAdapter = new ArtistsArrayAdapter(getActivity(), new ArrayList<SpotifyArtist>());
 
         SpotifyApi api = new SpotifyApi();
         mSpotifyService = api.getService();
 
-        mListView = (ListView) rootView.findViewById(R.id.artistsListView);
         mListView.setAdapter(mArtistArrayAdapter);
         mListView.setOnItemClickListener(mArtistArrayAdapter);
 
@@ -95,7 +81,6 @@ public class SearchActivityFragment extends Fragment {
             }
         });
 
-        mSearchView = (SearchView) rootView.findViewById(R.id.searchArtist);
         mSearchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {

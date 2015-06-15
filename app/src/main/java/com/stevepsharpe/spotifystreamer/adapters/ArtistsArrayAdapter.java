@@ -7,15 +7,19 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.ImageView;
+import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
 import com.stevepsharpe.spotifystreamer.R;
 import com.stevepsharpe.spotifystreamer.model.SpotifyArtist;
 import com.stevepsharpe.spotifystreamer.ui.activities.TracksActivity;
 import com.stevepsharpe.spotifystreamer.ui.fragments.TracksActivityFragment;
-import com.stevepsharpe.spotifystreamer.ui.viewholders.ArtistViewHolder;
 
 import java.util.ArrayList;
+
+import butterknife.ButterKnife;
+import butterknife.InjectView;
 
 /**
  * Created by stevepsharpe on 04/06/15.
@@ -34,16 +38,16 @@ public class ArtistsArrayAdapter extends ArrayAdapter<SpotifyArtist> implements 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
 
-        ArtistViewHolder holder = null;
+        ViewHolder holder = null;
         SpotifyArtist artist = this.getItem(position);
 
         if (convertView == null) {
             LayoutInflater inflater = LayoutInflater.from(mContext);
             convertView = inflater.inflate(R.layout.list_item_artist, parent, false);
-            holder = new ArtistViewHolder(convertView);
+            holder = new ViewHolder(convertView);
             convertView.setTag(holder);
         } else {
-            holder = (ArtistViewHolder) convertView.getTag();
+            holder = (ViewHolder) convertView.getTag();
         }
 
         holder.artistName.setText(artist.getName());
@@ -72,5 +76,18 @@ public class ArtistsArrayAdapter extends ArrayAdapter<SpotifyArtist> implements 
         Intent intent = new Intent(mContext, TracksActivity.class);
         intent.putExtra(TracksActivityFragment.SPOTIFY_ARTIST, artist);
         mContext.startActivity(intent);
+    }
+
+    public class ViewHolder {
+
+        @InjectView(R.id.artistThumb)
+        ImageView artistThumb;
+
+        @InjectView(R.id.artistName)
+        TextView artistName;
+
+        public ViewHolder(View view) {
+            ButterKnife.inject(this, view);
+        }
     }
 }
