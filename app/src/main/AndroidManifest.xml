@@ -26,6 +26,9 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".ui.activities.SearchActivity" />
         </activity>
+        <meta-data
+            android:name="io.fabric.ApiKey"
+            android:value="22f8b92c4ebd27b3ca962dda878ff6145f4311f7" />
     </application>
 
 </manifest>
